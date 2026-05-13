@@ -1,0 +1,40 @@
+# Append a directory to PATH only when it exists and is not already present.
+path_append() {
+    [ -n "$1" ] && [ -d "$1" ] || return
+
+    case ":$PATH:" in
+        *":$1:"*) ;;
+        *) PATH="${PATH:+$PATH:}$1" ;;
+    esac
+}
+
+# True when running inside Windows Subsystem for Linux.
+is_wsl() {
+    case "$(uname -r 2>/dev/null)" in
+        *Microsoft*|*microsoft*|*WSL*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# WSL inherits Windows paths by default; they can make Linux command lookup slow
+# and can accidentally prefer Windows executables over Linux ones.
+remove_wsl_windows_paths() {
+    local entry new_path old_ifs
+
+    old_ifs=$IFS
+    IFS=:
+    for entry in $PATH; do
+        case "$entry" in
+            /mnt/c|/mnt/c/*) continue ;;
+        esac
+
+        if [ -n "$new_path" ]; then
+            new_path="$new_path:$entry"
+        else
+            new_path="$entry"
+        fi
+    done
+    IFS=$old_ifs
+
+    PATH=$new_path
+}
