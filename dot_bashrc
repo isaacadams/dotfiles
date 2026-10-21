@@ -82,18 +82,18 @@ export SDKMAN_DIR="$HOME/.sdkman"
 # Secrets from pass (https://www.passwordstore.org/), when this machine has it set up.
 if command -v pass >/dev/null 2>&1; then
     # GitHub Packages registry token; gh CLI picks it up via GH_TOKEN.
-    SPOT_GH_REGISTRY_TOKEN=$(pass show github/token 2>/dev/null)
+    SPOT_GH_REGISTRY_TOKEN=$(pass show github/token 2>/dev/null | head -n 1)
     if [ -n "$SPOT_GH_REGISTRY_TOKEN" ]; then
         export SPOT_GH_REGISTRY_TOKEN
         export GH_TOKEN=$SPOT_GH_REGISTRY_TOKEN
     fi
 
-    SPOT_CASTLEIO=$(pass show spot/castleio 2>/dev/null)
+    SPOT_CASTLEIO=$(pass show spot/castleio 2>/dev/null | head -n 1)
     [ -n "$SPOT_CASTLEIO" ] && export SPOT_CASTLEIO
 
     # Datadog (headless pup CLI).
-    DD_API_KEY=$(pass show spot/datadog/api 2>/dev/null)
-    DD_APP_KEY=$(pass show spot/datadog/app 2>/dev/null)
+    DD_API_KEY=$(pass show spot/datadog/api 2>/dev/null | head -n 1)
+    DD_APP_KEY=$(pass show spot/datadog/app 2>/dev/null | head -n 1)
     if [ -n "$DD_API_KEY" ]; then
         export DD_API_KEY DD_APP_KEY DD_SITE=datadoghq.com
     fi
