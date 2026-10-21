@@ -18,7 +18,7 @@ esac
 # Put extra aliases in ~/.bash_aliases instead of adding them here directly.
 [ -f "$HOME/.bash_aliases" ] && . "$HOME/.bash_aliases"
 
-# Completion.
+# Completions.
 # Enable programmable completion features when bash-completion is installed.
 if ! shopt -oq posix; then
     if [ -f /usr/share/bash-completion/bash_completion ]; then
@@ -27,6 +27,8 @@ if ! shopt -oq posix; then
         . /etc/bash_completion
     fi
 fi
+# Grok CLI completions (binaries are symlinked into ~/.local/bin).
+[ -r "$HOME/.grok/completions/bash/grok.bash" ] && . "$HOME/.grok/completions/bash/grok.bash"
 
 # Toolchains.
 # Cargo/Rust.
@@ -69,12 +71,33 @@ if is_wsl; then
     remove_wsl_windows_paths
 fi
 
-# Docker Desktop note: do not set DOCKER_HOST here. Docker contexts should decide
-# where the CLI connects, especially on WSL where Docker Desktop manages this.
+# docker — do NOT set DOCKER_HOST, let Docker Desktop manage the context
+# setting DOCKER_HOST overrides context and routes to a standalone daemon that Docker Desktop cannot see
+# Docker contexts should decide where the CLI connects, especially on WSL where Docker Desktop manages this.
 
 # SDKMAN expects its init script to run near the end so it can adjust PATH.
 export SDKMAN_DIR="$HOME/.sdkman"
 [ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ] && . "$SDKMAN_DIR/bin/sdkman-init.sh"
+
+# Secrets from pass (https://www.passwordstore.org/), when this machine has it set up.
+if command -v pass >/dev/null 2>&1; then
+    # GitHub Packages registry token; gh CLI picks it up via GH_TOKEN.
+    SPOT_GH_REGISTRY_TOKEN=$(pass show github/token 2>/dev/null | head -n 1)
+    if [ -n "$SPOT_GH_REGISTRY_TOKEN" ]; then
+        export SPOT_GH_REGISTRY_TOKEN
+        export GH_TOKEN=$SPOT_GH_REGISTRY_TOKEN
+    fi
+
+    SPOT_CASTLEIO=$(pass show spot/castleio 2>/dev/null | head -n 1)
+    [ -n "$SPOT_CASTLEIO" ] && export SPOT_CASTLEIO
+
+    # Datadog (headless pup CLI).
+    DD_API_KEY=$(pass show spot/datadog/api 2>/dev/null | head -n 1)
+    DD_APP_KEY=$(pass show spot/datadog/app 2>/dev/null | head -n 1)
+    if [ -n "$DD_API_KEY" ]; then
+        export DD_API_KEY DD_APP_KEY DD_SITE=datadoghq.com
+    fi
+fi
 
 # Unmanaged, per-machine settings go here.
 [ -f "$HOME/.bashrc.local" ] && . "$HOME/.bashrc.local"
