@@ -43,10 +43,13 @@ elif [ -x /usr/local/bin/brew ]; then
     eval "$(/usr/local/bin/brew shellenv)"
 fi
 
-# nvm.
+# nvm. Load after Homebrew so nvm's node takes precedence over brew's.
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
+# In nested shells nvm updates its inherited PATH entry in place, which leaves
+# it behind the Homebrew entries prepended above; move it back to the front.
+[ -n "$NVM_BIN" ] && path_prepend "$NVM_BIN"
 
 # OpenSSL paths needed by some native Rust builds on Debian/Ubuntu x86_64.
 if [ -d /usr/lib/x86_64-linux-gnu ]; then
